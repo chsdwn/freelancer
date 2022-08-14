@@ -1,29 +1,46 @@
-version: "3.8"
+version: '3.8'
 
 services:
-  server:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    image: freelancer-server
-    volumes:
-      - ./server:/usr/src/server
-      - /usr/src/server/node_modules
-    ports:
-      - "4000:4000"
   client:
     build:
       context: ./client
       dockerfile: Dockerfile
-    image: freelancer-client
-    volumes:
-      - ./client:/usr/src/client
-      - /usr/src/client/node_modules
     depends_on:
       - server
+    environment:
+      - NODE_ENV=development
+    image: freelancer-client
+    volumes:
+      - ./client:/app
+      - /app/node_modules
     ports:
-      - "3000:3000"
+      - '3000:3000'
+  mongo:
+    image: mongo:5.0.10
+    ports:
+      - '27017:27017'
+    volumes:
+      - data-volume:/data/db
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    depends_on:
+      - mongo
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+    image: freelancer-server
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    ports:
+      - '3001:3001'
 
 networks:
   default:
     driver: bridge
+
+volumes:
+  data-volume:
+    driver: local
